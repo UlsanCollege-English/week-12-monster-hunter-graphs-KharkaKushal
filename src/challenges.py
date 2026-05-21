@@ -37,7 +37,10 @@ def build_hunter_map(edges: list[tuple[str, str]]) -> dict[str, list[str]]:
         graph.setdefault(a, set()).add(b)
         graph.setdefault(b, set()).add(a)
 
-    return {location: sorted(neighbors) for location, neighbors in graph.items()}
+    return {
+        location: sorted(neighbors)
+        for location, neighbors in graph.items()
+    }
 
 
 def build_weighted_hunter_map(
@@ -70,12 +73,9 @@ def build_weighted_hunter_map(
         graph.setdefault(b, {})
 
         current_ab = graph[a].get(b)
-        current_ba = graph[b].get(a)
 
         if current_ab is None or score < current_ab:
             graph[a][b] = score
-
-        if current_ba is None or score < current_ba:
             graph[b][a] = score
 
     return graph
@@ -91,20 +91,14 @@ def map_summary(graph: dict[str, list[str]]) -> dict[str, int]:
         A dictionary with:
             - "locations": number of locations
             - "routes": number of undirected routes
-
-    Example:
-        {
-            "A": ["B", "C"],
-            "B": ["A"],
-            "C": ["A"],
-        }
-
-        returns {"locations": 3, "routes": 2}
     """
     locations = len(graph)
     routes = sum(len(neighbors) for neighbors in graph.values()) // 2
 
-    return {"locations": locations, "routes": routes}
+    return {
+        "locations": locations,
+        "routes": routes,
+    }
 
 
 def most_connected_location(graph: dict[str, list[str]]) -> str | None:
