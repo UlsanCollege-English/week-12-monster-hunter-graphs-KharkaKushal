@@ -17,7 +17,10 @@ from src.challenges import (
 
 def normalize_graph(graph: dict[str, list[str]]) -> dict[str, list[str]]:
     """Sort neighbor lists so tests do not depend on list order."""
-    return {location: sorted(neighbors) for location, neighbors in graph.items()}
+    return {
+        location: sorted(neighbors)
+        for location, neighbors in graph.items()
+    }
 
 
 def test_build_hunter_map_adds_both_directions():
@@ -82,7 +85,9 @@ def test_build_weighted_hunter_map_keeps_lowest_duplicate_weight():
 
 
 @pytest.mark.parametrize("bad_weight", [0, -1, -10])
-def test_build_weighted_hunter_map_rejects_non_positive_weights(bad_weight):
+def test_build_weighted_hunter_map_rejects_non_positive_weights(
+    bad_weight,
+):
     edges = [("Old Theater", "Train Station", bad_weight)]
 
     with pytest.raises(ValueError):
@@ -92,22 +97,36 @@ def test_build_weighted_hunter_map_rejects_non_positive_weights(bad_weight):
 def test_map_summary_counts_locations_and_undirected_routes():
     graph = {
         "Old Theater": ["Train Station"],
-        "Train Station": ["Old Theater", "Library Basement", "Abandoned Pier"],
+        "Train Station": [
+            "Old Theater",
+            "Library Basement",
+            "Abandoned Pier",
+        ],
         "Library Basement": ["Train Station"],
         "Abandoned Pier": ["Train Station"],
     }
 
-    assert map_summary(graph) == {"locations": 4, "routes": 3}
+    assert map_summary(graph) == {
+        "locations": 4,
+        "routes": 3,
+    }
 
 
 def test_map_summary_empty_graph():
-    assert map_summary({}) == {"locations": 0, "routes": 0}
+    assert map_summary({}) == {
+        "locations": 0,
+        "routes": 0,
+    }
 
 
 def test_most_connected_location_returns_highest_degree_location():
     graph = {
         "Old Theater": ["Train Station"],
-        "Train Station": ["Old Theater", "Library Basement", "Abandoned Pier"],
+        "Train Station": [
+            "Old Theater",
+            "Library Basement",
+            "Abandoned Pier",
+        ],
         "Library Basement": ["Train Station"],
         "Abandoned Pier": ["Train Station"],
     }
