@@ -1,14 +1,20 @@
 # src/challenges.py
 
 from collections import defaultdict
+import heapq
 
 
-def build_hunter_map(edges):
+def build_hunter_map(edges: list[tuple[str, str]]) -> dict[str, list[str]]:
     """
     Build an undirected graph from edge pairs.
 
+    Each route works both directions. Duplicate neighbors are not added.
+
+    Args:
+        edges: List of (location1, location2) tuples representing routes.
+
     Returns:
-        dict[str, list[str]]
+        dict[str, list[str]]: Adjacency list with all locations and neighbors.
     """
     graph = defaultdict(set)
 
@@ -19,12 +25,23 @@ def build_hunter_map(edges):
     return {node: list(neighbors) for node, neighbors in graph.items()}
 
 
-def build_weighted_hunter_map(edges):
+def build_weighted_hunter_map(
+    edges: list[tuple[str, str, int]]
+) -> dict[str, dict[str, int]]:
     """
-    Build an undirected weighted graph.
+    Build an undirected weighted graph from route triples.
 
-    Keeps the lowest weight for duplicate edges.
-    Raises ValueError for non-positive weights.
+    Keeps the lowest danger score for duplicate edges.
+    Raises ValueError if any danger score is not positive.
+
+    Args:
+        edges: List of (location1, location2, danger_score) tuples.
+
+    Returns:
+        dict[str, dict[str, int]]: Weighted adjacency dict.
+
+    Raises:
+        ValueError: If any danger score is <= 0.
     """
     graph = defaultdict(dict)
 
@@ -43,9 +60,15 @@ def build_weighted_hunter_map(edges):
     return dict(graph)
 
 
-def map_summary(graph):
+def map_summary(graph: dict[str, list[str]]) -> dict[str, int]:
     """
-    Return number of locations and undirected routes.
+    Return the number of locations and undirected routes in the graph.
+
+    Args:
+        graph: Adjacency list representation of the graph.
+
+    Returns:
+        dict[str, int]: Dictionary with 'locations' and 'routes' counts.
     """
     locations = len(graph)
 
@@ -58,10 +81,17 @@ def map_summary(graph):
     }
 
 
-def most_connected_location(graph):
+def most_connected_location(graph: dict[str, list[str]]) -> str | None:
     """
-    Return the location with the highest degree.
-    Ties are resolved alphabetically.
+    Return the location with the most neighbors (highest degree).
+
+    Ties are resolved alphabetically (returns first alphabetically).
+
+    Args:
+        graph: Adjacency list representation of the graph.
+
+    Returns:
+        str | None: The most connected location, or None if graph is empty.
     """
     if not graph:
         return None
@@ -77,11 +107,26 @@ def most_connected_location(graph):
     return sorted(candidates)[0]
 
 
-def priority_hunt_order(reports):
+def priority_hunt_order(reports: list[tuple[int, str]]) -> list[str]:
     """
-    Sort by priority ascending, then alphabetically.
-    Returns only location names.
-    """
-    sorted_reports = sorted(reports, key=lambda x: (x[0], x[1]))
+    Return monster sighting locations sorted by priority (urgent first).
 
-    return [location for _, location in sorted_reports]
+    Lower priority number means more urgent.
+    Uses heapq for efficient priority queue handling.
+    Ties are resolved alphabetically.
+
+    Args:
+        reports: List of (priority, location) tuples.
+
+    Returns:
+        list[str]: Location names sorted from most urgent to least urgent.
+    """
+    heap = [(priority, location) for priority, location in reports]
+    heapq.heapify(heap)
+
+    result = []
+    while heap:
+        _, location = heapq.heappop(heap)
+        result.append(location)
+
+    return result
