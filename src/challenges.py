@@ -1,99 +1,56 @@
-"""Week 12: Monster Hunter Graphs.
+# src/challenges.py
 
-Complete each function using Python 3.11+.
-
-Rules:
-- Standard library only.
-- Use type hints.
-- Keep public function docstrings.
-- Run tests with: pytest -q
-"""
-
-import heapq
+from collections import defaultdict
 
 
-def build_hunter_map(edges: list[tuple[str, str]]) -> dict[str, list[str]]:
-    """Build an undirected adjacency list from route pairs.
-
-    Each tuple represents a two-way route between two monster sighting
-    locations.
-
-    Args:
-        edges: A list of route pairs, such as
-            [("Old Theater", "Train Station")].
+def build_hunter_map(edges):
+    """
+    Build an undirected graph from edge pairs.
 
     Returns:
-        A dictionary where each key is a location and each value is a list
-        of neighboring locations.
-
-    Rules:
-        - Add both directions for each route.
-        - Include every location that appears in the input.
-        - Do not duplicate neighbors if the same route appears more than once.
+        dict[str, list[str]]
     """
-    graph: dict[str, set[str]] = {}
+    graph = defaultdict(set)
 
     for a, b in edges:
-        graph.setdefault(a, set()).add(b)
-        graph.setdefault(b, set()).add(a)
+        graph[a].add(b)
+        graph[b].add(a)
 
-    return {
-        location: sorted(neighbors)
-        for location, neighbors in graph.items()
-    }
+    return {node: list(neighbors) for node, neighbors in graph.items()}
 
 
-def build_weighted_hunter_map(
-    edges: list[tuple[str, str, int]]
-) -> dict[str, dict[str, int]]:
-    """Build an undirected weighted graph from route triples.
-
-    Each tuple represents a two-way route with a positive danger score.
-
-    Args:
-        edges: A list of route triples, such as
-            [("Old Theater", "Train Station", 4)].
-
-    Returns:
-        A nested dictionary where graph[start][end] is the danger score.
-
-    Rules:
-        - Add both directions for each route.
-        - Danger scores must be positive integers.
-        - If danger score is 0 or negative, raise ValueError.
-        - If the same route appears more than once, keep the lowest score.
+def build_weighted_hunter_map(edges):
     """
-    graph: dict[str, dict[str, int]] = {}
+    Build an undirected weighted graph.
 
-    for a, b, score in edges:
-        if score <= 0:
-            raise ValueError("Danger scores must be positive integers.")
+    Keeps the lowest weight for duplicate edges.
+    Raises ValueError for non-positive weights.
+    """
+    graph = defaultdict(dict)
 
-        graph.setdefault(a, {})
-        graph.setdefault(b, {})
+    for a, b, weight in edges:
+        if weight <= 0:
+            raise ValueError("Weight must be positive")
 
-        current_ab = graph[a].get(b)
+        # Add/update a -> b
+        if b not in graph[a] or weight < graph[a][b]:
+            graph[a][b] = weight
 
-        if current_ab is None or score < current_ab:
-            graph[a][b] = score
-            graph[b][a] = score
+        # Add/update b -> a
+        if a not in graph[b] or weight < graph[b][a]:
+            graph[b][a] = weight
 
-    return graph
+    return dict(graph)
 
 
-def map_summary(graph: dict[str, list[str]]) -> dict[str, int]:
-    """Return the number of locations and undirected routes.
-
-    Args:
-        graph: An undirected adjacency list.
-
-    Returns:
-        A dictionary with:
-            - "locations": number of locations
-            - "routes": number of undirected routes
+def map_summary(graph):
+    """
+    Return number of locations and undirected routes.
     """
     locations = len(graph)
-    routes = sum(len(neighbors) for neighbors in graph.values()) // 2
+
+    total_edges = sum(len(neighbors) for neighbors in graph.values())
+    routes = total_edges // 2
 
     return {
         "locations": locations,
@@ -101,49 +58,30 @@ def map_summary(graph: dict[str, list[str]]) -> dict[str, int]:
     }
 
 
-def most_connected_location(graph: dict[str, list[str]]) -> str | None:
-    """Return the location with the most neighbors.
-
-    Args:
-        graph: An undirected adjacency list.
-
-    Returns:
-        The location with the most neighbors.
-        If the graph is empty, return None.
-        If there is a tie, return the alphabetically first location.
+def most_connected_location(graph):
+    """
+    Return the location with the highest degree.
+    Ties are resolved alphabetically.
     """
     if not graph:
         return None
 
-    return min(
-        graph,
-        key=lambda location: (-len(graph[location]), location),
-    )
+    max_degree = max(len(neighbors) for neighbors in graph.values())
+
+    candidates = [
+        location
+        for location, neighbors in graph.items()
+        if len(neighbors) == max_degree
+    ]
+
+    return sorted(candidates)[0]
 
 
-def priority_hunt_order(reports: list[tuple[int, str]]) -> list[str]:
-    """Return monster sighting locations from most urgent to least urgent.
-
-    Lower priority number means more urgent.
-
-    Args:
-        reports: A list of tuples in the form (priority, location).
-
-    Returns:
-        A list of locations ordered from lowest priority number to highest.
-
-    Requirement:
-        Use heapq.
+def priority_hunt_order(reports):
     """
-    heap: list[tuple[int, str]] = []
+    Sort by priority ascending, then alphabetically.
+    Returns only location names.
+    """
+    sorted_reports = sorted(reports, key=lambda x: (x[0], x[1]))
 
-    for priority, location in reports:
-        heapq.heappush(heap, (priority, location))
-
-    ordered: list[str] = []
-
-    while heap:
-        _, location = heapq.heappop(heap)
-        ordered.append(location)
-
-    return ordered
+    return [location for _, location in sorted_reports]
